@@ -15,7 +15,8 @@ import com.example.hw3.ui1.widgets.AnimeCard
 fun AnimeListScreen(
     uiState: AnimeListUiState,
     onSearchChange: (String) -> Unit,
-    onAnimeClick: (Int) -> Unit
+    onAnimeClick: (Int) -> Unit,
+    onRetry: () -> Unit
 ) {
 
     Scaffold(
@@ -44,41 +45,37 @@ fun AnimeListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            uiState.errorMessage?.let {
-                Text("Ошибка: $it")
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
-            when {
+            if (uiState.isLoading) {
 
-                uiState.isLoading -> {
-                    Text("Loading...")
+                Text("Loading...")
+
+            } else if (uiState.errorMessage != null) {
+
+                Text("Ошибка: ${uiState.errorMessage}")
+
+                Button(onClick = {
+                    onRetry()
+                }) {
+                    Text("Retry")
                 }
 
-                !uiState.hasSearched -> {
-                    Text("Введите название аниме")
-                }
+            } else if (!uiState.hasSearched) {
 
-                uiState.animeList.isEmpty() -> {
-                    Text("Ничего не найдено")
-                }
+                Text("Введите название аниме")
 
-                else -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            uiState.animeList,
-                            key = { it.id }
-                        ) { anime ->
+            } else if (uiState.animeList.isEmpty()) {
 
-                            AnimeCard(
-                                anime = anime,
-                                onClick = {
-                                    onAnimeClick(anime.id)
-                                }
-                            )
-                        }
+                Text("Ничего не найдено")
+
+            } else {
+
+                LazyColumn {
+                    items(uiState.animeList) { anime ->
+                        AnimeCard(
+                            anime = anime,
+                            onClick = { onAnimeClick(anime.id) }
+                        )
                     }
                 }
             }

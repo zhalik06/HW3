@@ -39,8 +39,8 @@ fun JikanAnimeDto.toDomainOrNull(): Anime? {
     return Anime(
         id = id,
         title = safeTitle,
-        year = year ?: 0,
+        year = year,
         genre = genresString,
-        episodes = episodes ?: 0
+        episodes = episodes
     )
 }

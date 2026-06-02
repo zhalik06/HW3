@@ -31,7 +31,8 @@ fun AnimeApp() {
                     navController.navigate(
                         Routes.details(id)
                     )
-                }
+                },
+                onRetry = vm::retry
             )
         }
 
@@ -46,12 +47,10 @@ fun AnimeApp() {
 
             val id = backStackEntry.arguments
                 ?.getInt(Routes.ANIME_ID)
-
-            val anime = vm.uiState.animeList
-                .find { it.id == id }
+                ?: return@composable
 
             AnimeDetailsScreen(
-                anime = anime,
+                animeId = id,
                 onBack = {
                     navController.popBackStack()
                 }

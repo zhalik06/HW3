@@ -1,23 +1,28 @@
 package com.example.hw3.ui1.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.hw3.model.Anime
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.hw3.ui1.AnimeDetailsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimeDetailsScreen(
-    anime: Anime?,
+    animeId: Int,
     onBack: () -> Unit
 ) {
+
+    val viewModel: AnimeDetailsViewModel = viewModel()
+
+    val state = viewModel.uiState
+
+    LaunchedEffect(animeId) {
+        viewModel.loadAnime(animeId)
+    }
 
     Scaffold(
         topBar = {
@@ -30,53 +35,43 @@ fun AnimeDetailsScreen(
     ) { padding ->
 
         Column(
-            modifier =
-                Modifier
-                    .padding(padding)
-                    .padding(16.dp)
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
         ) {
 
-            Button(
-                onClick = onBack
-            ) {
+            Button(onClick = onBack) {
                 Text("Back")
             }
 
-            Spacer(
-                modifier =
-                    Modifier.height(16.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            if (anime == null) {
+            when {
 
-                Text(
-                    "Anime not found"
-                )
+                state.isLoading -> {
+                    Text("Loading...")
+                }
 
-            } else {
+                state.errorMessage != null -> {
+                    Text("Ошибка: ${state.errorMessage}")
+                }
 
-                Text(
-                    anime.title,
-                    fontWeight =
-                        FontWeight.Bold
-                )
+                state.anime != null -> {
+                    Text(
+                        state.anime.title,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Spacer(
-                    modifier =
-                        Modifier.height(8.dp)
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    "Year: ${anime.year}"
-                )
+                    Text("Year: ${state.anime.year ?: "Unknown"}")
+                    Text("Genre: ${state.anime.genre}")
+                    Text("Episodes: ${state.anime.episodes ?: "Unknown"}")
+                }
 
-                Text(
-                    "Genre: ${anime.genre}"
-                )
-
-                Text(
-                    "Episodes: ${anime.episodes}"
-                )
+                else -> {
+                    Text("Anime not found")
+                }
             }
         }
     }

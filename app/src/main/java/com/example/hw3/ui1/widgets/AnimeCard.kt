@@ -31,9 +31,13 @@ fun AnimeCard(
                 fontWeight = FontWeight.Bold
             )
 
-            Text("${anime.year} • ${anime.genre}")
+            Text(
+                "${anime.year ?: "Unknown"} • ${anime.genre}"
+            )
 
-            Text("Episodes: ${anime.episodes}")
+            Text(
+                "Episodes: ${anime.episodes ?: "Unknown"}"
+            )
         }
     }
 }
