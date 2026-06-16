@@ -30,7 +30,8 @@ fun JikanAnimeDetailsDto.toAnime(): Anime {
         genre = genres
             ?.mapNotNull { it.name }
             ?.joinToString(", ")
-            .orEmpty(),
+            .orEmpty()
+            .ifBlank { "Unknown" },
         episodes = episodes
     )
 }

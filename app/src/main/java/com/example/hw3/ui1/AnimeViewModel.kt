@@ -5,16 +5,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.hw3.NetworkModule
 import com.example.hw3.data.AnimeRepository
+import com.example.hw3.model.Anime
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-class AnimeViewModel(
-    private val repository: AnimeRepository =
-        AnimeRepository(NetworkModule.api)
+data class AnimeListUiState(
+    val searchQuery: String = "",
+    val animeList: List<Anime> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val hasSearched: Boolean = false
+)
+
+@HiltViewModel
+class AnimeViewModel @Inject constructor(
+    private val repository: AnimeRepository
 ) : ViewModel() {
 
     var uiState by mutableStateOf(AnimeListUiState())
@@ -25,14 +35,21 @@ class AnimeViewModel(
     fun onSearchQueryChange(newValue: String) {
 
         uiState = uiState.copy(
-            searchQuery = newValue
+            searchQuery = newValue,
+            errorMessage = null
         )
+
+        searchJob?.cancel()
 
         val query = newValue.trim()
 
         if (query.isBlank()) {
-            searchJob?.cancel()
-            uiState = AnimeListUiState()
+            uiState = uiState.copy(
+                animeList = emptyList(),
+                isLoading = false,
+                errorMessage = null,
+                hasSearched = false
+            )
             return
         }
 
@@ -41,7 +58,6 @@ class AnimeViewModel(
 
     fun retry() {
         val query = uiState.searchQuery.trim()
-
         if (query.isNotBlank()) {
             loadAnime(query)
         }
@@ -53,14 +69,14 @@ class AnimeViewModel(
 
         searchJob = viewModelScope.launch {
 
+            delay(500)
+
             uiState = uiState.copy(
                 isLoading = true,
                 errorMessage = null,
                 animeList = emptyList(),
                 hasSearched = true
             )
-
-            delay(500)
 
             try {
 
@@ -75,7 +91,6 @@ class AnimeViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-
                 uiState = uiState.copy(
                     isLoading = false,
                     errorMessage = "Ошибка загрузки",

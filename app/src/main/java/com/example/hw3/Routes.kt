@@ -3,6 +3,7 @@ package com.example.hw3
 object Routes {
 
     const val LIST = "list"
+    const val FAVOURITES = "favourites"
     const val DETAILS = "details"
     const val ANIME_ID = "animeId"
 

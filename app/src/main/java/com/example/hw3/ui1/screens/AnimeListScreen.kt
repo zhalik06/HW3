@@ -3,6 +3,8 @@ package com.example.hw3.ui1.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,14 +18,21 @@ fun AnimeListScreen(
     uiState: AnimeListUiState,
     onSearchChange: (String) -> Unit,
     onAnimeClick: (Int) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onFavouritesClick: () -> Unit
 ) {
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Anime Viewer")
+                title = { Text("Anime Viewer") },
+                actions = {
+                    IconButton(onClick = onFavouritesClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = "Favourites"
+                        )
+                    }
                 }
             )
         }
@@ -45,37 +54,41 @@ fun AnimeListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            when {
 
-            if (uiState.isLoading) {
-
-                Text("Loading...")
-
-            } else if (uiState.errorMessage != null) {
-
-                Text("Ошибка: ${uiState.errorMessage}")
-
-                Button(onClick = {
-                    onRetry()
-                }) {
-                    Text("Retry")
+                uiState.isLoading -> {
+                    Text("Loading...")
                 }
 
-            } else if (!uiState.hasSearched) {
+                uiState.errorMessage != null -> {
+                    Text("Ошибка: ${uiState.errorMessage}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onRetry) {
+                        Text("Retry")
+                    }
+                }
 
-                Text("Введите название аниме")
+                !uiState.hasSearched -> {
+                    Text("Введите название аниме")
+                }
 
-            } else if (uiState.animeList.isEmpty()) {
+                uiState.animeList.isEmpty() -> {
+                    Text("Ничего не найдено")
+                }
 
-                Text("Ничего не найдено")
-
-            } else {
-
-                LazyColumn {
-                    items(uiState.animeList) { anime ->
-                        AnimeCard(
-                            anime = anime,
-                            onClick = { onAnimeClick(anime.id) }
-                        )
+                else -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = uiState.animeList,
+                            key = { it.id }
+                        ) { anime ->
+                            AnimeCard(
+                                anime = anime,
+                                onClick = { onAnimeClick(anime.id) }
+                            )
+                        }
                     }
                 }
             }
