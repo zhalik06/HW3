@@ -3,6 +3,8 @@ package com.example.hw3.ui1.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,16 +16,24 @@ import com.example.hw3.ui1.widgets.AnimeCard
 @Composable
 fun AnimeListScreen(
     uiState: AnimeListUiState,
+    searchQuery: String,
     onSearchChange: (String) -> Unit,
     onAnimeClick: (Int) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onFavouritesClick: () -> Unit
 ) {
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Anime Viewer")
+                title = { Text("Anime Viewer") },
+                actions = {
+                    IconButton(onClick = onFavouritesClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = "Favourites"
+                        )
+                    }
                 }
             )
         }
@@ -36,7 +46,7 @@ fun AnimeListScreen(
         ) {
 
             OutlinedTextField(
-                value = uiState.searchQuery,
+                value = searchQuery,
                 onValueChange = onSearchChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Search") },
@@ -45,37 +55,41 @@ fun AnimeListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            when (uiState) {
 
-            if (uiState.isLoading) {
-
-                Text("Loading...")
-
-            } else if (uiState.errorMessage != null) {
-
-                Text("Ошибка: ${uiState.errorMessage}")
-
-                Button(onClick = {
-                    onRetry()
-                }) {
-                    Text("Retry")
+                is AnimeListUiState.Initial -> {
+                    Text("Введите название аниме")
                 }
 
-            } else if (!uiState.hasSearched) {
+                is AnimeListUiState.Loading -> {
+                    Text("Loading...")
+                }
 
-                Text("Введите название аниме")
+                is AnimeListUiState.Error -> {
+                    Text("Ошибка: ${uiState.message}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onRetry) {
+                        Text("Retry")
+                    }
+                }
 
-            } else if (uiState.animeList.isEmpty()) {
+                is AnimeListUiState.Empty -> {
+                    Text("Ничего не найдено")
+                }
 
-                Text("Ничего не найдено")
-
-            } else {
-
-                LazyColumn {
-                    items(uiState.animeList) { anime ->
-                        AnimeCard(
-                            anime = anime,
-                            onClick = { onAnimeClick(anime.id) }
-                        )
+                is AnimeListUiState.Success -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = uiState.animeList,
+                            key = { it.id }
+                        ) { anime ->
+                            AnimeCard(
+                                anime = anime,
+                                onClick = { onAnimeClick(anime.id) }
+                            )
+                        }
                     }
                 }
             }

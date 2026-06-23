@@ -1,34 +1,40 @@
 package com.example.hw3.ui1.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.hw3.ui1.AnimeDetailsViewModel
+import com.example.hw3.ui1.AnimeDetailsUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimeDetailsScreen(
-    animeId: Int,
-    onBack: () -> Unit
+    state: AnimeDetailsUiState,
+    isFavourite: Boolean,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onToggleFavourite: () -> Unit
 ) {
-
-    val viewModel: AnimeDetailsViewModel = viewModel()
-
-    val state = viewModel.uiState
-
-    LaunchedEffect(animeId) {
-        viewModel.loadAnime(animeId)
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Anime Details")
+                title = { Text("Anime Details") },
+                actions = {
+                    if (state is AnimeDetailsUiState.Success) {
+                        IconButton(onClick = onToggleFavourite) {
+                            Icon(
+                                imageVector = if (isFavourite) Icons.Filled.Favorite
+                                else Icons.Filled.FavoriteBorder,
+                                contentDescription = if (isFavourite) "Remove from favourites"
+                                else "Add to favourites"
+                            )
+                        }
+                    }
                 }
             )
         }
@@ -46,31 +52,31 @@ fun AnimeDetailsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            when {
+            when (state) {
 
-                state.isLoading -> {
+                is AnimeDetailsUiState.Initial -> {}
+
+                is AnimeDetailsUiState.Loading -> {
                     Text("Loading...")
                 }
 
-                state.errorMessage != null -> {
-                    Text("Ошибка: ${state.errorMessage}")
+                is AnimeDetailsUiState.Error -> {
+                    Text("Ошибка: ${state.message}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onRetry) {
+                        Text("Retry")
+                    }
                 }
 
-                state.anime != null -> {
+                is AnimeDetailsUiState.Success -> {
                     Text(
                         state.anime.title,
                         fontWeight = FontWeight.Bold
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     Text("Year: ${state.anime.year ?: "Unknown"}")
                     Text("Genre: ${state.anime.genre}")
                     Text("Episodes: ${state.anime.episodes ?: "Unknown"}")
-                }
-
-                else -> {
-                    Text("Anime not found")
                 }
             }
         }

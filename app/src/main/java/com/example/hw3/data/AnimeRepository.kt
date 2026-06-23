@@ -6,28 +6,26 @@ import com.example.hw3.data.remote.toDomainOrNull
 import com.example.hw3.model.Anime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class AnimeRepository(
+interface AnimeRepository {
+    suspend fun searchAnime(query: String): List<Anime>
+    suspend fun getAnimeById(id: Int): Anime
+}
+
+class AnimeRepositoryImpl @Inject constructor(
     private val api: JikanApi
-) {
+) : AnimeRepository {
 
-    suspend fun searchAnime(
-        query: String
-    ): List<Anime> = withContext(Dispatchers.IO) {
+    override suspend fun searchAnime(query: String): List<Anime> =
+        withContext(Dispatchers.IO) {
+            api.searchAnime(query = query)
+                .data
+                .mapNotNull { it.toDomainOrNull() }
+        }
 
-        api.searchAnime(query)
-            .data
-            .mapNotNull {
-                it.toDomainOrNull()
-            }
-    }
-
-    suspend fun getAnimeById(
-        id: Int
-    ): Anime = withContext(Dispatchers.IO) {
-
-        api.getAnimeById(id)
-            .data
-            .toAnime()
-    }
+    override suspend fun getAnimeById(id: Int): Anime =
+        withContext(Dispatchers.IO) {
+            api.getAnimeById(id).data.toAnime()
+        }
 }
