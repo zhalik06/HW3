@@ -16,6 +16,7 @@ import com.example.hw3.ui1.widgets.AnimeCard
 @Composable
 fun AnimeListScreen(
     uiState: AnimeListUiState,
+    searchQuery: String,
     onSearchChange: (String) -> Unit,
     onAnimeClick: (Int) -> Unit,
     onRetry: () -> Unit,
@@ -45,7 +46,7 @@ fun AnimeListScreen(
         ) {
 
             OutlinedTextField(
-                value = uiState.searchQuery,
+                value = searchQuery,
                 onValueChange = onSearchChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Search") },
@@ -54,29 +55,29 @@ fun AnimeListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            when {
+            when (uiState) {
 
-                uiState.isLoading -> {
+                is AnimeListUiState.Initial -> {
+                    Text("Введите название аниме")
+                }
+
+                is AnimeListUiState.Loading -> {
                     Text("Loading...")
                 }
 
-                uiState.errorMessage != null -> {
-                    Text("Ошибка: ${uiState.errorMessage}")
+                is AnimeListUiState.Error -> {
+                    Text("Ошибка: ${uiState.message}")
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onRetry) {
                         Text("Retry")
                     }
                 }
 
-                !uiState.hasSearched -> {
-                    Text("Введите название аниме")
-                }
-
-                uiState.animeList.isEmpty() -> {
+                is AnimeListUiState.Empty -> {
                     Text("Ничего не найдено")
                 }
 
-                else -> {
+                is AnimeListUiState.Success -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {

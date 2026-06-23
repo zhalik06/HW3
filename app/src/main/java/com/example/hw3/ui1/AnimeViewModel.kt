@@ -14,88 +14,79 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-data class AnimeListUiState(
-    val searchQuery: String = "",
-    val animeList: List<Anime> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val hasSearched: Boolean = false
-)
+sealed interface AnimeListUiState {
+    data object Initial : AnimeListUiState
+    data object Loading : AnimeListUiState
+    data class Success(val animeList: List<Anime>) : AnimeListUiState
+    data class Error(val message: String) : AnimeListUiState
+    data object Empty : AnimeListUiState
+}
 
 @HiltViewModel
 class AnimeViewModel @Inject constructor(
     private val repository: AnimeRepository
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(AnimeListUiState())
+    var uiState by mutableStateOf<AnimeListUiState>(AnimeListUiState.Initial)
+        private set
+
+    var searchQuery by mutableStateOf("")
         private set
 
     private var searchJob: Job? = null
 
     fun onSearchQueryChange(newValue: String) {
 
-        uiState = uiState.copy(
-            searchQuery = newValue,
-            errorMessage = null
-        )
-
+        searchQuery = newValue
         searchJob?.cancel()
 
         val query = newValue.trim()
 
         if (query.isBlank()) {
-            uiState = uiState.copy(
-                animeList = emptyList(),
-                isLoading = false,
-                errorMessage = null,
-                hasSearched = false
-            )
+            uiState = AnimeListUiState.Initial
             return
         }
 
-        loadAnime(query)
-    }
-
-    fun retry() {
-        val query = uiState.searchQuery.trim()
-        if (query.isNotBlank()) {
-            loadAnime(query)
-        }
-    }
-
-    private fun loadAnime(query: String) {
-
-        searchJob?.cancel()
+        uiState = AnimeListUiState.Loading
 
         searchJob = viewModelScope.launch {
-
-            delay(500)
-
-            uiState = uiState.copy(
-                isLoading = true,
-                errorMessage = null,
-                animeList = emptyList(),
-                hasSearched = true
-            )
+            delay(500L)
 
             try {
-
                 val result = repository.searchAnime(query)
 
-                uiState = uiState.copy(
-                    animeList = result,
-                    isLoading = false,
-                    errorMessage = null
-                )
+                uiState = if (result.isEmpty()) {
+                    AnimeListUiState.Empty
+                } else {
+                    AnimeListUiState.Success(result)
+                }
 
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                uiState = uiState.copy(
-                    isLoading = false,
-                    errorMessage = "Ошибка загрузки",
-                    animeList = emptyList()
-                )
+                uiState = AnimeListUiState.Error("Ошибка загрузки")
+            }
+        }
+    }
+
+    fun retry() {
+        val query = searchQuery.trim()
+        if (query.isNotBlank()) {
+            uiState = AnimeListUiState.Loading
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch {
+                try {
+                    val result = repository.searchAnime(query)
+                    uiState = if (result.isEmpty()) {
+                        AnimeListUiState.Empty
+                    } else {
+                        AnimeListUiState.Success(result)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    uiState = AnimeListUiState.Error("Ошибка загрузки")
+                }
             }
         }
     }

@@ -2,7 +2,9 @@ package com.example.hw3
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hw3.ui1.AnimeDetailsUiState
 import com.example.hw3.ui1.AnimeDetailsViewModel
+import com.example.hw3.ui1.AnimeListUiState
 import com.example.hw3.ui1.AnimeViewModel
 import com.example.hw3.ui1.FavouritesViewModel
 import com.example.hw3.ui1.screens.AnimeDetailsScreen
@@ -27,11 +30,11 @@ fun AnimeApp() {
     ) {
 
         composable(Routes.LIST) {
-
             val vm: AnimeViewModel = hiltViewModel()
 
             AnimeListScreen(
                 uiState = vm.uiState,
+                searchQuery = vm.searchQuery,
                 onSearchChange = vm::onSearchQueryChange,
                 onAnimeClick = { id ->
                     navController.navigate(Routes.details(id))
@@ -49,9 +52,7 @@ fun AnimeApp() {
 
             FavouritesScreen(
                 favouritesFlow = vm.favourites,
-                onAnimeClick = { id ->
-                    navController.navigate(Routes.details(id))
-                },
+                onRemove = vm::remove,
                 onBack = {
                     navController.popBackStack()
                 }
@@ -71,6 +72,7 @@ fun AnimeApp() {
                 ?: return@composable
 
             val vm: AnimeDetailsViewModel = hiltViewModel()
+            val isFavourite by vm.isFavourite(id).collectAsState()
 
             LaunchedEffect(id) {
                 vm.loadAnime(id)
@@ -78,7 +80,7 @@ fun AnimeApp() {
 
             AnimeDetailsScreen(
                 state = vm.uiState,
-                isFavouriteFlow = vm.isFavourite(id),
+                isFavourite = isFavourite,
                 onBack = {
                     navController.popBackStack()
                 },

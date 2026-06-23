@@ -6,25 +6,20 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hw3.ui1.AnimeDetailsUiState
-import kotlinx.coroutines.flow.StateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimeDetailsScreen(
     state: AnimeDetailsUiState,
-    isFavouriteFlow: StateFlow<Boolean>,
+    isFavourite: Boolean,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onToggleFavourite: () -> Unit
 ) {
-    val isFavourite by isFavouriteFlow.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(
