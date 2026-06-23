@@ -2,11 +2,8 @@ package com.example.hw3
 
 import com.example.hw3.data.AnimeRepository
 import com.example.hw3.model.Anime
-import com.example.hw3.ui1.AnimeDetailsUiState
-import com.example.hw3.ui1.AnimeDetailsViewModel
 import com.example.hw3.ui1.AnimeListUiState
 import com.example.hw3.ui1.AnimeViewModel
-import com.example.hw3.data.FavouritesRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -17,6 +14,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.launch
 
 class AnimeViewModelTest {
 
@@ -144,5 +143,27 @@ class AnimeViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 2) { repository.searchAnime("naruto") }
+    }
+
+    @Test
+    fun `search emits Loading then Success in sequence`() = runTest {
+        coEvery { repository.searchAnime("bleach") } returns listOf(anime1)
+        val vm = AnimeViewModel(repository)
+
+        val states = mutableListOf<AnimeListUiState>()
+
+        val job = launch {
+            snapshotFlow { vm.uiState }.collect { states.add(it) }
+        }
+
+        vm.onSearchQueryChange("bleach")
+        advanceTimeBy(600)
+        advanceUntilIdle()
+
+        job.cancel()
+
+        assertTrue(states[0] is AnimeListUiState.Initial)
+        assertTrue(states[1] is AnimeListUiState.Loading)
+        assertTrue(states.last() is AnimeListUiState.Success)
     }
 }
