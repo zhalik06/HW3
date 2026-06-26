@@ -1,5 +1,6 @@
 package com.example.hw3.ui1.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,8 +12,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.hw3.model.Anime
 import kotlinx.coroutines.flow.StateFlow
 
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun FavouritesScreen(
     favouritesFlow: StateFlow<List<Anime>>,
+    onAnimeClick: (Int) -> Unit,
     onRemove: (Int) -> Unit,
     onBack: () -> Unit
 ) {
@@ -54,7 +56,9 @@ fun FavouritesScreen(
                         key = { it.id }
                     ) { anime ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAnimeClick(anime.id) },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(

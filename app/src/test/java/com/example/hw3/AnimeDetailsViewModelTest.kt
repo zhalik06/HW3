@@ -11,10 +11,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.launch
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
-import kotlinx.coroutines.flow.first
 
 class AnimeDetailsViewModelTest {
 
@@ -71,13 +71,22 @@ class AnimeDetailsViewModelTest {
     }
 
     @Test
-    fun `isFavourite returns correct flow value`() = runTest {
+    fun `isFavourite StateFlow reflects repository value after loadAnime`() = runTest {
+        coEvery { repository.getAnimeById(1) } returns anime
         coEvery { favouritesRepository.isFavourite(1) } returns flowOf(true)
         val vm = AnimeDetailsViewModel(repository, favouritesRepository)
 
-        val result = favouritesRepository.isFavourite(1).first()
+        vm.loadAnime(1)
+        advanceUntilIdle()
 
-        assertTrue(result)
+        val collected = mutableListOf<Boolean>()
+        val job = launch {
+            vm.isFavourite.collect { collected.add(it) }
+        }
+        advanceUntilIdle()
+        job.cancel()
+
+        assertTrue(collected.contains(true))
     }
 
     @Test

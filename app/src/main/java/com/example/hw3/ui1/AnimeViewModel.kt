@@ -36,7 +36,6 @@ class AnimeViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     fun onSearchQueryChange(newValue: String) {
-
         searchQuery = newValue
         searchJob?.cancel()
 
@@ -51,43 +50,33 @@ class AnimeViewModel @Inject constructor(
 
         searchJob = viewModelScope.launch {
             delay(500L)
-
-            try {
-                val result = repository.searchAnime(query)
-
-                uiState = if (result.isEmpty()) {
-                    AnimeListUiState.Empty
-                } else {
-                    AnimeListUiState.Success(result)
-                }
-
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                uiState = AnimeListUiState.Error("Ошибка загрузки")
-            }
+            executeSearch(query)
         }
     }
 
     fun retry() {
         val query = searchQuery.trim()
         if (query.isNotBlank()) {
-            uiState = AnimeListUiState.Loading
             searchJob?.cancel()
+            uiState = AnimeListUiState.Loading
             searchJob = viewModelScope.launch {
-                try {
-                    val result = repository.searchAnime(query)
-                    uiState = if (result.isEmpty()) {
-                        AnimeListUiState.Empty
-                    } else {
-                        AnimeListUiState.Success(result)
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    uiState = AnimeListUiState.Error("Ошибка загрузки")
-                }
+                executeSearch(query)
             }
+        }
+    }
+
+    private suspend fun executeSearch(query: String) {
+        try {
+            val result = repository.searchAnime(query)
+            uiState = if (result.isEmpty()) {
+                AnimeListUiState.Empty
+            } else {
+                AnimeListUiState.Success(result)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            uiState = AnimeListUiState.Error("Ошибка загрузки")
         }
     }
 }

@@ -32,7 +32,6 @@ class AnimeListScreenTest {
                 onFavouritesClick = {}
             )
         }
-
         composeRule.onNodeWithText("Loading...").assertIsDisplayed()
     }
 
@@ -48,7 +47,6 @@ class AnimeListScreenTest {
                 onFavouritesClick = {}
             )
         }
-
         composeRule.onNodeWithText("Bleach").assertIsDisplayed()
     }
 
@@ -64,14 +62,12 @@ class AnimeListScreenTest {
                 onFavouritesClick = {}
             )
         }
-
         composeRule.onNodeWithText("Retry").assertIsDisplayed()
     }
 
     @Test
     fun retryButtonCallsOnRetry() {
         var retryClicked = false
-
         composeRule.setContent {
             AnimeListScreen(
                 uiState = AnimeListUiState.Error("Ошибка загрузки"),
@@ -82,7 +78,6 @@ class AnimeListScreenTest {
                 onFavouritesClick = {}
             )
         }
-
         composeRule.onNodeWithText("Retry").performClick()
         assert(retryClicked)
     }

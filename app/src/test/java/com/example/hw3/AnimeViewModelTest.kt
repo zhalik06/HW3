@@ -14,8 +14,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.launch
 
 class AnimeViewModelTest {
 
@@ -151,19 +149,17 @@ class AnimeViewModelTest {
         val vm = AnimeViewModel(repository)
 
         val states = mutableListOf<AnimeListUiState>()
-
-        val job = launch {
-            snapshotFlow { vm.uiState }.collect { states.add(it) }
-        }
+        states.add(vm.uiState)
 
         vm.onSearchQueryChange("bleach")
+        states.add(vm.uiState)
+
         advanceTimeBy(600)
         advanceUntilIdle()
-
-        job.cancel()
+        states.add(vm.uiState)
 
         assertTrue(states[0] is AnimeListUiState.Initial)
         assertTrue(states[1] is AnimeListUiState.Loading)
-        assertTrue(states.last() is AnimeListUiState.Success)
+        assertTrue(states[2] is AnimeListUiState.Success)
     }
 }

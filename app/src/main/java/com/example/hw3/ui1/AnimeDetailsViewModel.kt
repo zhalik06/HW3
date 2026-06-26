@@ -9,10 +9,14 @@ import com.example.hw3.data.AnimeRepository
 import com.example.hw3.data.FavouritesRepository
 import com.example.hw3.model.Anime
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -33,10 +37,15 @@ class AnimeDetailsViewModel @Inject constructor(
     var uiState by mutableStateOf<AnimeDetailsUiState>(AnimeDetailsUiState.Initial)
         private set
 
-    private var currentAnimeId: Int? = null
+    private val currentAnimeId = MutableStateFlow<Int?>(null)
 
-    fun isFavourite(id: Int): StateFlow<Boolean> =
-        favouritesRepository.isFavourite(id)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val isFavourite: StateFlow<Boolean> =
+        currentAnimeId
+            .flatMapLatest { id ->
+                if (id != null) favouritesRepository.isFavourite(id)
+                else flowOf(false)
+            }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -45,18 +54,15 @@ class AnimeDetailsViewModel @Inject constructor(
 
     fun loadAnime(animeId: Int) {
 
-        if (currentAnimeId == animeId && uiState is AnimeDetailsUiState.Success) return
+        if (currentAnimeId.value == animeId && uiState is AnimeDetailsUiState.Success) return
 
-        currentAnimeId = animeId
+        currentAnimeId.value = animeId
         uiState = AnimeDetailsUiState.Loading
 
         viewModelScope.launch {
-
             try {
-
                 val anime = repository.getAnimeById(animeId)
                 uiState = AnimeDetailsUiState.Success(anime)
-
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
